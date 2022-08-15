@@ -1,0 +1,128 @@
+<!doctype html>
+<html dir="ltr" lang="en-US">
+    <head>
+        <meta version="">
+        <meta charset="utf-8">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+        <meta name="theme-color" content="#000000">
+        <link rel="manifest" href="/manifest.json">
+        <base href="">
+        <title>Home</title>
+        <style type="text/css">
+        [responsive-image] > img, [data-responsive-image] {overflow: hidden; padding: 0; } [responsive-image] > img, [data-responsive-image] > img {width: 100%;}
+        @keyframes element-queries { 0% { visibility: inherit; } }
+        .cui pre {animation: 0.1s element-queries;}
+        .cui pre > .resize-sensor {min-width: 0px;}
+        </style>
+        <link href="/static/css/main.9254ac55.chunk.css" rel="stylesheet">
+        <link type="text/css" rel="stylesheet" href="/www.netacad.com/sites/default/files/css/css_R5nXYxbvGTejIvVw_vWgd-uEBah1jSVrOuqbfLK6YLg.css" media="all">
+    </head>
+    <body class="cui" style="overflow: hidden scroll; height: auto;">
+
+        <main id="main-content" style="background-color: rgb(245, 245, 246);">
+            <div class="main-content">   
+                <div class="region region-content">
+                    <section id="block-views-all-courses-block" class="block block-views clearfix" style="margin: 0px;">
+                        <div class="view view-all-courses view-id-all_courses view-display-id-block view-dom-id-2bb2d90e7abb1b9ea32e43d435185e28 jquery-once-2-processed">
+                            <div class="hero__content hero--indigo" style="background: #005073; padding: 5em 3em 1em 3em;" align="center">
+                                <h1>
+                                    <b><i>
+                                        You're Back Again!
+                                    </i></b>
+                                </h1>
+								<h2 style="color: #ffffff; padding-top: 1.5em;">
+                                    <b>
+                                        Cisco NetAcad Content Provider
+                                    </b>
+                                </h2>
+								<h4 style="text-align: right; color: #ffffff; padding-top: 2em;">
+                                    <b>
+										ContentPro 1.0
+									</b>
+                                </h4>
+                            </div>
+
+                            <div class="view-content" style="background: #e8ebf1; padding: 1.5em 0em 1em 0em;">
+                                <div class="table-responsive" style="border-width: 0px; margin: 0px;">
+                                    <table class="views-table cols-0 table table-hover table-striped">
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <table style="display: none;"><tbody id="template">
+            <tr class="odd" style="background: none;">
+                <td class="views-field views-field-nothing" style="border-width: 0px; padding-bottom: 1.5em;">
+                    <div class="col-md-offset-2">
+                        <div class="allcourse-category-image Networking col-md-3" style="overflow: hidden;">
+                            <img class="_topic" typeof="foaf:Image" class="img-responsive" src="" alt="" style="" width="190" height="230">
+                        </div>
+                        <div class="allcourse-details col-md-7" style="overflow: clip;">
+                            <div class="_option"></div>
+                            <h4>
+                                <a href="" class="_title"></a>
+                            </h4>
+                            <div class="allcourse-category-image-small">
+                                <img class="_topic" typeof="foaf:Image" class="img-responsive" src="" alt="" style="" width="50" height="50">
+                            </div>
+                            <div>
+                                <p class="_description"></p>
+                            </div>
+                            <div class"imgwrapperdiv"="">
+                                <div class="allcourse-skill-image">
+                                    <img class="_level" typeof="foaf:Image" class="img-responsive" src="" alt="" style="" width="100" height="19">
+                                </div>
+                            </div>
+                            <div class="learnmorewrapper">
+                                <div class="course-level _level"></div>
+                                <div class="btn btn--primary learn-more">
+                                    <a class="_link" href="" target="_blank">Learn More</a>
+                                </div>
+                                <div>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tbody></table>
+
+        <script type="text/javascript">
+        fetch(window.location.origin+"/courses.json").then(response => response.json())
+        .then((courses) => {
+            var course_list = Object.keys(courses);
+            var template = document.getElementById("template").firstElementChild;
+            console.log(template)
+            for (n=0; n<course_list.length; n++) {
+                var x = course_list[n];
+
+                template.getElementsByClassName("_option")[0].textContent = courses[x].option;
+                template.getElementsByClassName("_title")[0].textContent = courses[x].title;
+                template.getElementsByClassName("_title")[0].href = "/launch-course?course="+x;
+                template.getElementsByClassName("_description")[0].textContent = courses[x].description;
+                template.getElementsByClassName("_level")[0].src = `/www.netacad.com/sites/default/files/icons-${courses[x].level.toLowerCase()}.png`;
+                template.getElementsByClassName("_level")[1].textContent = courses[x].level;
+                template.getElementsByClassName("_topic")[0].src = `/www.netacad.com/sites/default/files/${courses[x].topic.toLowerCase()}-190.png`;
+                template.getElementsByClassName("_topic")[0].alt = courses[x].topic + " icon";
+                template.getElementsByClassName("_topic")[1].src = `/www.netacad.com/sites/default/files/${courses[x].topic.toLowerCase()}-50.png`;
+                courses[x].topic;
+                template.getElementsByClassName("_topic")[1].alt = courses[x].topic + " icon";
+                template.getElementsByClassName("_link")[0].href = courses[x].link;
+
+                var clone = template.cloneNode(true);
+                document.getElementsByTagName("tbody")[0].appendChild(clone);
+            }
+
+            document.getElementById("template").removeChild(template);
+        })
+        
+        </script>
+    </body>
+</html>
