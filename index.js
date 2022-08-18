@@ -15,7 +15,7 @@ const cors = require("cors");
 
 // BOOT PROCESS
 const app = express();
-require("./databases/scripts/init_env");
+require("./init_env");
 asyncBootSteps = ["./databases/scripts/connect_db", "./databases/scripts/create_db", "./databases/scripts/setup_tables", "!begin_Listening"]
 
 function begin_step(step) {
