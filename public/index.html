@@ -16,7 +16,6 @@
         .cui pre > .resize-sensor {min-width: 0px;}
         </style>
         <link href="/static/css/main.9254ac55.chunk.css" rel="stylesheet">
-        <link type="text/css" rel="stylesheet" href="/www.netacad.com/sites/default/files/css/css_R5nXYxbvGTejIvVw_vWgd-uEBah1jSVrOuqbfLK6YLg.css" media="all">
     </head>
     <body class="cui" style="overflow: hidden scroll; height: auto;">
 
@@ -93,36 +92,5 @@
                 </td>
             </tr>
         </tbody></table>
-
-        <script type="text/javascript">
-        fetch(window.location.origin+"/courses.json").then(response => response.json())
-        .then((courses) => {
-            var course_list = Object.keys(courses);
-            var template = document.getElementById("template").firstElementChild;
-            console.log(template)
-            for (n=0; n<course_list.length; n++) {
-                var x = course_list[n];
-
-                template.getElementsByClassName("_option")[0].textContent = courses[x].option;
-                template.getElementsByClassName("_title")[0].textContent = courses[x].title;
-                template.getElementsByClassName("_title")[0].href = "/launch-course?course="+x;
-                template.getElementsByClassName("_description")[0].textContent = courses[x].description;
-                template.getElementsByClassName("_level")[0].src = `/www.netacad.com/sites/default/files/icons-${courses[x].level.toLowerCase()}.png`;
-                template.getElementsByClassName("_level")[1].textContent = courses[x].level;
-                template.getElementsByClassName("_topic")[0].src = `/www.netacad.com/sites/default/files/${courses[x].topic.toLowerCase()}-190.png`;
-                template.getElementsByClassName("_topic")[0].alt = courses[x].topic + " icon";
-                template.getElementsByClassName("_topic")[1].src = `/www.netacad.com/sites/default/files/${courses[x].topic.toLowerCase()}-50.png`;
-                courses[x].topic;
-                template.getElementsByClassName("_topic")[1].alt = courses[x].topic + " icon";
-                template.getElementsByClassName("_link")[0].href = courses[x].link;
-
-                var clone = template.cloneNode(true);
-                document.getElementsByTagName("tbody")[0].appendChild(clone);
-            }
-
-            document.getElementById("template").removeChild(template);
-        })
-        
-        </script>
     </body>
 </html>

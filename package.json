@@ -11,6 +11,9 @@
   "author": "BeyondPapers",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "mime-types": "^2.1.35",
+    "mysql": "^2.18.1"
   }
 }

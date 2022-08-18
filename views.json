@@ -1,0 +1,6 @@
+{
+	"/favicon.ico": ["/favicon.ico"],
+	"/static/.*": [":urlPath"],
+	"/": ["/index.html"],
+	".*": []
+}
