@@ -3,55 +3,59 @@ require("dotenv").config();
 const host = "localhost";
 const port = process.env.PORT || 2222;
 
-// IMPORTS
-const ready = require("./comm");
-const handle_get = require("./controllers/content-handler");
-
-// DEPENDENCIES
-const express = require("express");
-const cors = require("cors");
-
-
 
 // BOOT PROCESS
-const app = express();
-require("./init_env");
-asyncBootSteps = ["./databases/scripts/connect_db", "./databases/scripts/create_db", "./databases/scripts/setup_tables", "!begin_Listening"]
+async function boot() {
+	console.log("> Server booting");
+	
+	// DEPENDENCIES
+	const express = require("express");
+	const cors = require("cors");
+	const cookieParser = require("cookie-parser");
 
-function begin_step(step) {
-	if (step == "!begin_Listening") {
-		app.listen(port, host, () => {
-			ready.begin_Listening = true;
-			console.log(`Server now communicating at http://${host}:${port}`);
-		});
-	}
+	console.log("> Server looking for required environment variables");
+	require("./init_env");
+
+	console.log("> Server setting up database");
+	await require("./database/scripts/create_db");
+
+	console.log("> Server connecting to database");
+	await require("./database/scripts/connect_db");
+
+	console.log("> Server setting up tables");
+	await require("./database/scripts/setup_tables");
+
+	const app = express();
+
+	app.listen(port, host, () => {
+		console.log(`> Server finished booting (${process.env.NODE_ENV})`);
+		console.log(`> Server now listening at http://${host}:${port}`);
+	});
+
+
+	// IMPORTS
+	const auth = require("./auth/authorize");
+	const view = require("./views/view");
+	const GET = require("./controllers/get");
+	const POST = require("./controllers/post");
+
+
+
+	// BACK-END BUSINESS
+	app.use(cors());
+	app.use(cookieParser(process.env.COOKIES_KEY));
+	app.use(express.urlencoded({extended: false}));
+	app.use(express.json({extended: false, limit: '1024mb'}));
+
+	app.use(view);
+	app.use(auth);
+
+	app.get(/^\/.*/, GET);
+	app.post(/^\/.*/, POST);
+
+
+
+
+	require("./_lab"); // My practical laboratory
 }
-
-function do_step(n) {
-	var stepId = setInterval(() => {
-		if (n) {
-			var prevStep = asyncBootSteps[n-1].split("/").reverse()[0];
-		} else {
-			var prevStep = "init";
-		}
-		if (ready[prevStep]) {
-			if (!asyncBootSteps[n].startsWith("!")) {
-				require(asyncBootSteps[n]);
-			} else {
-				begin_step(asyncBootSteps[n]);
-			}
-			clearInterval(stepId);
-		}
-	}, 0)
-}
-
-for (var n = 0; n < asyncBootSteps.length; n++) {
-	do_step(n);
-}
-
-
-
-// BACK-END BUSINESS
-app.use(cors());
-
-app.get(/^\/.*/, handle_get);
+boot();

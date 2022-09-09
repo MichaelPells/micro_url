@@ -1,0 +1,17 @@
+{
+	"/": ["/index.html", {"protected": true, "unauthorizedOnly": true}],
+	"/signup": ["/index.html", {"protected": true, "unauthorizedOnly": true}],
+	"/signin": ["/index.html", {"protected": true, "unauthorizedOnly": true}],
+
+	"/signout": ["/index.html", {"protected": true}],
+	"/team": ["/index.html", {"protected": true}],
+
+	"/favicon.ico": ["/favicon.ico"],
+	"/asset-manifest.json": ["/asset-manifest.json"],
+	"/manifest.json": ["/manifest.json"],
+	"/robots.txt": ["/robots.txt"],
+	"/styles.css": ["/styles.css"],
+	"/static/.*": [":urlPath"],
+
+	".*": ["/index.html"]
+}

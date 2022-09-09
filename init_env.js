@@ -1,4 +1,4 @@
-const requiredCredential = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
+const requiredCredential = ["NODE_ENV", "DB_HOST", "DB_USER", "DB_PASS", "DB_NAME", "PASSWDS_TABLE", "COOKIES_KEY", "SESSIONS_KEY"];
 
 for (credential of requiredCredential) {
 	if (!process.env[credential]) {
