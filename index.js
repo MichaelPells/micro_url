@@ -28,14 +28,25 @@ async function boot() {
 	const app = express();
 
 	app.listen(port, host, () => {
-		console.log(`> Server finished booting (${process.env.NODE_ENV})`);
-		console.log(`> Server now listening at http://${host}:${port}`);
+		console.log(`> Server started`);
+		console.log(`
+    | Time:        ${new Date().toLocaleString()}
+    | Environment: ${process.env.NODE_ENV}
+    | Address:     http://${host}:${port}
+`);
+	});
+
+	// Catch uncaught errors
+	process.on("uncaughtException", (err) => {
+		console.log(err);
 	});
 
 
 	// IMPORTS
-	const auth = require("./auth/authorize");
 	const view = require("./views/view");
+	const auth = require("./auth/authorize");
+	const sessions = require("./auth/sessions");
+
 	const GET = require("./controllers/get");
 	const POST = require("./controllers/post");
 
@@ -49,6 +60,7 @@ async function boot() {
 
 	app.use(view);
 	app.use(auth);
+	app.use(sessions);
 
 	app.get(/^\/.*/, GET);
 	app.post(/^\/.*/, POST);

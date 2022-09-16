@@ -63,6 +63,7 @@ exports.sessionsDef = `
 entry		 				BIGINT UNSIGNED AUTO_INCREMENT		UNIQUE KEY	,
 id							VARCHAR(255)	NOT NULL			PRIMARY KEY	,
 sessionLogs					JSON			NULL							,
-lastLoggedIn				DATETIME		NULL
+lastLoggedIn				DATETIME		NULL							,
+lastSeen					DATETIME		NULL
 `
 .replace(/	+/g, " ").replace(/ +,/g, ",");

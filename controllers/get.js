@@ -22,7 +22,7 @@ function main(req, res) {
 		if (file && file.startsWith(":")) {
 			file = reqDB[file.slice(1, file.length)];
 		}
-	
+
 		fs.readFile(`public${file}`, (err, data) => {
 			if (!err) {
 				res.statusCode = OK;
@@ -33,8 +33,9 @@ function main(req, res) {
 				
 				res.setHeader("Content-Type", contentType);
 				res.send(data);
-	
-			} else {
+			} 
+			
+			else {
 				res.statusCode = NOT_FOUND;
 				res.end();
 			}

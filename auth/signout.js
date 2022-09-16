@@ -10,7 +10,7 @@ async function signout(req, res) {
 
 	const User = new user({email: req.user.email});
 
-	User.on(["validated", "rejected"], async () => {
+	User.on(["validated", "rejected"], () => {
 		User.sessionLogs = JSON.parse(User.sessionLogs);
 		User.sessionLogs[req.sessionId].closed = new Date(); // Mark session as closed
 		delete User.sessionLogs[req.sessionId].currentSession; // Remove current session (a mere handle bound with cookie `session` for tracking client's browsing session changes)
@@ -45,3 +45,5 @@ async function signout(req, res) {
 }
 
 module.exports = signout;
+
+// Some necessary automatic signouts happen in auth/authorize.js, using the same core feature as this module in its `signout` function.

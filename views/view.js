@@ -17,7 +17,7 @@ function view(req, _, next) {
 
 	if (patterns.includes(route)) { // Then, find view by key
 		var view = views[route];
-	} else { // Then, find view by matching route against each pattern
+	} else { // Then, find view by matching route against each pattern (expensive)
 		var index = rpatterns.findIndex(view => view.test(route));
 		var view = views[patterns[index]];
 	}

@@ -106,7 +106,6 @@ class user {
 	};
 
 	static sanitizes = {
-		email: "identity",
 		firstName: "name",
 		lastName: "name",
 		middleName: "name",
@@ -115,7 +114,6 @@ class user {
 		about: "note",
 		stateRegion: "name",
 		city: "name",
-		emailAddresses: ["identity"],
 		socialMedia: [{name: "name"}],
 		careerGoals: "note",
 		careerQuestionnaires: [{answer: "note"}],
@@ -219,7 +217,7 @@ class user {
 						for (var field of Object.keys(User)) {
 							this[field] = User[field];
 						}
-						this.id = "0";
+						this.id = 0;
 						function rand() {return Math.trunc(Math.random()*10).toString()}
 						this.passwd = rand() + rand() + rand() + rand() + rand() + rand() + rand() + rand();
 
@@ -232,11 +230,12 @@ class user {
 
 						// Localize user's data
 						for (var field of Object.keys(data)) {
-							if (data[field] != undefined) {
+							if (data[field]) {
 								this[field] = this.data[field] = this.savedData[field] = data[field];
 							}
 						}
 						
+
 						// Announce validation (validation is automatic for existing users)
 						this.info.validated = true;
 						user.caller(this.listeners, "validated");
@@ -271,74 +270,41 @@ class user {
 
 				for (var field of Object.keys(rqs)) {
 
-					// Convert all fields to their raw data types - delete invalid JSONs
-					if (
-						changed.includes(field) &&
-						this[field] != undefined &&
-						rqs[field].type == "JSON" && typeof(this[field]) != "object"
-					) { // Convert JSONs to objects
+					// Convert all fields to the database-required data type
+					if (this[field] && typeof(this[field]) == "object" && rqs[field].type == "JSON") { // Since MySQL stores JSON in binary text format
+						try {this[field] = JSON.stringify(this[field])}
+						catch (e) {
+							errors.push({name: "RequirementError", message: [field, "valid"]});
+							delete this[field];
+						}
+					}
+					else if (this[field] != undefined && typeof(this[field]) != "string" && rqs[field].type.includes("VARCHAR")) {
+						this[field] = String(this[field]);
+					}
+
+					// Remove all null, undefined, or empty fields or invalid JSONs
+					if (!this[field]) {
+						delete this[field];
+					}
+					if (this[field] != undefined && rqs[field].type == "JSON") {
 						try {
-							this[field] = JSON.parse(this[field])
-							if (typeof(this[field]) != "object") {throw "error"}
+							if (JSON.parse(this[field]).length == 0) {
+								delete this[field];
+							}
 						}
 						catch (e) {
 							errors.push({name: "RequirementError", message: [field, "valid"]});
 							delete this[field];
-							delete changes[field];
-							continue;
-						}
-
-					}
-					else if (
-						changed.includes(field) &&
-						this[field] != undefined &&
-						rqs[field].type.includes("VARCHAR") && typeof(this[field]) != "string"
-					) { // Convert VARCHARs to strings
-						this[field] = String(this[field]);
-					}			
-
-					// Remove all null, undefined, or empty fields
-					if (
-						changed.includes(field) &&
-						(this[field] == undefined || this[field] === "")
-					) {
-						delete this[field];
-						delete changes[field];
-					}
-
-					else if (
-						changed.includes(field) &&
-						this[field] != undefined && rqs[field].type == "JSON"
-					) {
-						if (Object.keys(this[field]).length == 0) { // Works for even arrays
-							delete this[field];
-							delete changes[field];
 						}
 					}
 
-					// Sanitize all fields - check for data types, remove/correct irregularities and potentially dangerous or unwanted characters
-					if (
-						changed.includes(field) &&
-						this[field] != undefined &&
-						rqs[field].sanitize &&
-						!this.sanitize(field) // Sanitization takes place at this corner - If sanitization warrants field removal (may be due to unfixable data or wrong data type, as determined by `sanitize()`)
-					) {
-						errors.push({name: "RequirementError", message: [field, "valid"]});
-						delete this[field];
-						delete changes[field];
-					}
-
-					// Check for required fields (independent of changes)
-					else if (
-						rqs[field].required &&
-						this[field] == undefined
-					) {
+					// Check for required fields
+					if (rqs[field].required && !this[field]) {
 						errors.push({name: "RequirementError", message: [field, "required"]});
 					}
 	
 					// Check for too short data (strings)
 					else if (
-						changed.includes(field) &&
 						this[field] != undefined &&
 						rqs[field].minLength &&
 						this[field].length < rqs[field].minLength
@@ -348,7 +314,6 @@ class user {
 	
 					// Check for too long data (strings)
 					else if (
-						changed.includes(field) &&
 						this[field] != undefined &&
 						rqs[field].maxLength &&
 						this[field].length > rqs[field].maxLength
@@ -356,7 +321,6 @@ class user {
 						errors.push({name: "RequirementError", message: [field, "maxLength"]});
 					}
 					else if (
-						changed.includes(field) &&
 						this[field] != undefined &&
 						rqs[field].type.includes("VARCHAR") &&
 						this[field].length > 255
@@ -366,17 +330,15 @@ class user {
 
 					// Check for too long data (JSONs)
 					else if (
-						changed.includes(field) &&
 						this[field] != undefined &&
 						rqs[field].maxCount &&
-						this[field].length > rqs[field].maxCount
+						JSON.parse(this[field]).length > rqs[field].maxCount
 					) {
 						errors.push({name: "RequirementError", message: [field, "maxCount"]});
 					}
 	
 					// Check for disallowed data in special fields (such as emails, DOBs... and JSON fields)
 					else if (
-						changed.includes(field) &&
 						this[field] != undefined &&
 						rqs[field].test &&
 						!user.test(this[field], rqs[field].test)
@@ -385,27 +347,21 @@ class user {
 					}
 
 					// Check if chosen handle is available
-					if (
-						changed.includes(field) &&
-						field == "handle" && this[field] != undefined
-					) {
-						try {
-							var handleUser = await user.findOne({handle: this.handle});
-							if (handleUser && handleUser.id != this.id) {
-								errors.push({name: "RequirementError", message: ["handle", "available"]});
-							}
-						}
-						catch (e) {
-							errors.push({name: "RequirementError", message: ["handle", "indeterminate"]});
+					if (this[field] != undefined && field == "handle") {
+						var handleUser = await user.findOne({handle: this.handle});
+						if (handleUser && handleUser.id != this.id) {
+							errors.push({name: "RequirementError", message: ["handle", "available"]});
 						}
 					}
 
-					// Fianlly, convert all fields to the database-required data type
+					// Sanitize all fields - check for data types, remove/correct irregularities and potentially dangerous or unwanted characters
 					if (
-						changed.includes(field) &&
-						this[field] && rqs[field].type == "JSON"
-					) { // Since MySQL stores JSON in binary text format
-						this[field] = JSON.stringify(this[field]);
+						this[field] != undefined &&
+						rqs[field].sanitize &&
+						!this.sanitize(field) // Sanitization takes place at this corner - If sanitization warrants field removal (may be due to unfixable data or wrong data type, as determined by `sanitize()`)
+					) {
+						errors.push({name: "RequirementError", message: [field, "valid"]});
+						delete this[field];
 					}
 				}
 
@@ -416,7 +372,6 @@ class user {
 					if (callback) {callback({name: "ValidationError", message: errors, code: "CANNOT_VALIDATE_USER"})}
 					else {reject({name: "ValidationError", message: errors, code: "CANNOT_VALIDATE_USER"})}
 				}
-
 				else {
 					// Record new changes into current status (`this.data`)
 					for (var field of changed) {
@@ -481,32 +436,18 @@ class user {
 		// field types
 		const fieldTypes = {
 			line: function(data) {
-				data = data.trim().replace(/\s+/g, " "); // Whitespaces
-				
-				return data;
+				return "line";
 			},
 
 			name: function(data) {
-				data = data.trim().replace(/\s+/g, " "); // Whitespaces
-				data = data.split(" ").map(word => {return word[0].toUpperCase() + word.slice(1)}).join(" "); // Capitalization
-
-				return data;
+				return "name";
 			},
 
 			note: function(data) {
-				data = data.trim(); // Start and End Whitespaces
-
-				return data;
-			},
-
-			identity: function(data) {
-				data = data.trim(); // Start and End Whitespaces
-				data = data.toLowerCase(); // Lowercase
-
-				return data;
+				return "note";
 			}
 		}
-
+		
 		// data types
 		const dataTypes = {
 			string: function(data, sanitizeRule) { // No more breakdown
@@ -563,8 +504,7 @@ class user {
 				(dataType === "array" && Array.isArray(this[field]))
 			) { // If field data type and sanitize-rule data types match
 				if (dataTypes[dataType]) { // If the sanitize-rule's data type is supported by `sanitize()`
-					try {this[field] = dataTypes[dataType](this[field], sanitizeRule)}
-					catch (e) {return false} // Unexpected data type somewhere, or something
+					this[field] = dataTypes[dataType](this[field], sanitizeRule);
 				}
 				return true;
 			} else { // No match
@@ -589,15 +529,19 @@ class user {
 				.test(String(value).toLowerCase());
 		}
 
-		function areEmails(values) {
-			for (var value of values) {
-				if (!isEmail(value)) {return false}
-				if (values.filter((val) => {return value.toLowerCase() == val.toLowerCase()}).length > 1) {return false}
+		function areEmails(value) {
+			value = JSON.parse(value);
+			for (var email of value) {
+				if (!isEmail(email)) {return false}
 			}
 			return true;
 		}
 
 		function isDate(value) {
+			try {value = JSON.parse(value)}
+			catch (e) {
+				if (!value || typeof(value) != "object") {return false}
+			}
 			if (value.length != 3) {return false}
 			var year = value[2];
 			var month = value[1];
@@ -650,15 +594,14 @@ class user {
 			return true; // Check a match from a list of countries (local or fetched)
 		}
 
-		function areLanguages(values) {
-			for (value of values) {
-				if (values.filter((val) => {return value.toLowerCase() == val.toLowerCase()}).length > 1) {return false}
-			}
-
+		function areLanguages(value) {
+			value = JSON.parse(value);
 			return true; // Check a match from a list of languages (local or fetched)
 		}
 
-		function areMedia(values) {
+		function areMedia(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.name || !isName(value.name)) {return false}
 				if (!value.url || !isURL(value.url)) {return false}
@@ -669,10 +612,14 @@ class user {
 		}
 
 		function wereAsked(value) {
+			var values = JSON.parse(value);
+
 			return true; // Check if the server indeed previously asked the user these questions
 		}
 
-		function areEducation(values) {
+		function areEducation(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.school || !isText(value.school)) {return false}
 				if (!value.programme || !isText(value.programme)) {return false}
@@ -685,7 +632,9 @@ class user {
 			return true;
 		}
 
-		function areWork(values) {
+		function areWork(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.organization || !isText(value.organization)) {return false}
 				if (value.location && !isName(value.location)) {return false}
@@ -698,15 +647,18 @@ class user {
 			return true;
 		}
 
-		function areSkills(values) {
+		function areSkills(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!isName(value)) {return false}
-				if (values.filter((val) => {return value.toLowerCase() == val.toLowerCase()}).length > 1) {return false}
 			}
 			return true;
 		}
 
-		function areCARs(values) {
+		function areCARs(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.name || !isName(value.name)) {return false}
 				if (!value.issuer || !isName(value.issuer)) {return false}
@@ -721,7 +673,9 @@ class user {
 			return true;
 		}
 
-		function arePROAs(values) {
+		function arePROAs(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.title || !isName(value.title)) {return false}
 				if (!value.description || !isText(value.description)) {return false}
@@ -730,7 +684,9 @@ class user {
 			return true;
 		}
 
-		function arePublications(values) {
+		function arePublications(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.title || !isName(value.title)) {return false}
 				if (value.idType && !isName(value.idType)) {return false}
@@ -744,7 +700,9 @@ class user {
 			return true;
 		}
 
-		function areBooks(values) {
+		function areBooks(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!value.title || !isName(value.title)) {return false}
 				if (!value.authors || !isText(value.authors)) {return false}
@@ -758,63 +716,55 @@ class user {
 			return true;
 		}
 
-		function areHobbies(values) {
+		function areHobbies(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!isName(value)) {return false}
-				if (values.filter((val) => {return value.toLowerCase() == val.toLowerCase()}).length > 1) {return false}
 			}
 			return true;
 		}
 
-		function areInterests(values) {
+		function areInterests(value) {
+			var values = JSON.parse(value);
+
 			for (value of values) {
 				if (!isName(value)) {return false}
-				if (values.filter((val) => {return value.toLowerCase() == val.toLowerCase()}).length > 1) {return false}
 			}
 			return true;
 		}
 
-		try {
-			if (check == "isEmail") {return isEmail(value)}
-			if (check == "areEmails") {return areEmails(value)}
-			if (check == "isDate") {return isDate(value)}
-			if (check == "isGender") {return isGender(value)}
-			if (check == "isPhone") {return isPhone(value)}
-			if (check == "isHandle") {return isHandle(value)}
-			if (check == "isPath") {return isPath(value)}
-			if (check == "isURL") {return isURL(value)}
-			if (check == "isCountry") {return isCountry(value)}
-			if (check == "areLanguages") {return areLanguages(value)}
-			if (check == "areMedia") {return areMedia(value)}
-			if (check == "wereAsked") {return wereAsked(value)}
-			if (check == "areEducation") {return areEducation(value)}
-			if (check == "areWork") {return areWork(value)}
-			if (check == "areSkills") {return areSkills(value)}
-			if (check == "areCARs") {return areCARs(value)}
-			if (check == "arePROAs") {return arePROAs(value)}
-			if (check == "arePublications") {return arePublications(value)}
-			if (check == "areBooks") {return areBooks(value)}
-			if (check == "areHobbies") {return areHobbies(value)}
-			if (check == "areInterests") {return areInterests(value)}
-		}
-		catch (e) {return false}
+		if (check == "isEmail") {return isEmail(value)}
+		if (check == "areEmails") {return areEmails(value)}
+		if (check == "isDate") {return isDate(value)}
+		if (check == "isGender") {return isGender(value)}
+		if (check == "isPhone") {return isPhone(value)}
+		if (check == "isHandle") {return isHandle(value)}
+		if (check == "isPath") {return isPath(value)}
+		if (check == "isURL") {return isURL(value)}
+		if (check == "isCountry") {return isCountry(value)}
+		if (check == "areLanguages") {return areLanguages(value)}
+		if (check == "areMedia") {return areMedia(value)}
+		if (check == "wereAsked") {return wereAsked(value)}
+		if (check == "areEducation") {return areEducation(value)}
+		if (check == "areWork") {return areWork(value)}
+		if (check == "areSkills") {return areSkills(value)}
+		if (check == "areCARs") {return areCARs(value)}
+		if (check == "arePROAs") {return arePROAs(value)}
+		if (check == "arePublications") {return arePublications(value)}
+		if (check == "areBooks") {return areBooks(value)}
+		if (check == "areHobbies") {return areHobbies(value)}
+		if (check == "areInterests") {return areInterests(value)}
 	}
 
 	getChanges (prototype = this.data) {
 		var changes = {};
 		var rqs = user.requirements;
 
-		var prototypeFields = Object.keys(prototype);
-		var thisFields = Object.keys(this);
-
-		// Check if there are changes in any field between its values in prototype and `this`
 		for (var field of Object.keys(rqs)) {
-			if (prototypeFields.includes(field) || thisFields.includes(field)) {
-				if (
-					this[field] !== prototype[field] ||
-					(!prototypeFields.includes(field) && thisFields.includes(field)) // For new `undefined` values in `this`
-				) {
-					changes[field] = this[field]; // Report new change
+			if (prototype[field] !== undefined || this[field] !== undefined) {
+				if (this[field] !== prototype[field]) {
+					changes[field] = this[field];
 				}
 			}
 		}
@@ -832,12 +782,9 @@ class user {
 						else {reject(error)}
 					} else {
 						if (data) {
-							// Announce 'existing user'
-							this.info.existing = true;
-
 							// Localize user's data
 							for (var field of Object.keys(data)) {
-								if (data[field] != undefined) {
+								if (data[field]) {
 									this[field] = this.data[field] = this.savedData[field] = data[field];
 								}
 							}
@@ -1007,25 +954,14 @@ class user {
 			if (this.info.validated && Object.keys(this.getChanges()).length == 0) { // If there are no unvalidated changes
 				if (!this.info.existing) {  // Create new user in database
 					var thisUser = this;
-
-					// Generate User id
-					try {
-						thisUser.id = thisUser.data.id = await this.genId();
-					} catch (err) {
-						if (callback) {callback(err)}
-						else {reject(err)}
-						return;
-					}
-					
+					thisUser.id = thisUser.data.id = await this.genId();
 					thisUser.status = thisUser.data.status = JSON.stringify({name: "UNCONFIRMED", details: "new account"});
 
 					var salt = await bcrypt.genSalt(10);
 					var passwd;
 					
-					async function saveToDB(tables) { // For each table
+					async function saveToDB(tables) {
 						var table = tables[0];
-
-						// List out fields that apply to this table
 						var User = {};
 
 						for (var field of Object.keys(thisUser)) {
@@ -1035,11 +971,11 @@ class user {
 						}
 
 						// Hash `passwd`
-						if (User.passwd) { // If this table accepts field `passwd`
+						if (User.passwd) {
 							User.passwd = await bcrypt.hash(User.passwd + table, salt);
 							if (table == user.tables[0]) {passwd = User.passwd}
 						}
-
+						
 						var fields = Object.keys(User);
 						var data = Object.values(User);
 
@@ -1049,19 +985,18 @@ class user {
 						.replace("@", "?, ".repeat(fields.length - 1) + "?");
 
 						DB.query(QUERY, data, (err, _) => {
-							if (err) { // If error
+							if (err) {
 								// Delete any already-written record from all tables
 								thisUser.delete()
 								.catch(_ => {});
 								
 								if (callback) {callback(err)}
 								else {reject(err)}
-							} else { // If sucessful
+							} else {
 								tables.splice(table, 1);
-								if (tables.length) { // If there is any table left
-									saveToDB(tables); // Proceed with the next table
-								}
-								else { // If there is no table left
+								if (tables.length) {
+									saveToDB(tables);
+								} else {
 									// Record new 'save changes' into current 'save status' (`this.savedData`)
 									thisUser.savedData = {...thisUser.data};
 									thisUser.passwd = thisUser.data.passwd = thisUser.savedData.passwd = passwd;
@@ -1086,8 +1021,7 @@ class user {
 					if (changed.length) { // Changes made
 						var thisUser = this;
 
-						// Change `passwd` as well, if `password` gets changed
-						if (changed.includes("password")) {
+						if (changed.includes("password")) { // Change `passwd` as well, if `password` gets changed
 							changed.push("passwd");
 							function rand() {return Math.trunc(Math.random()*10).toString()}
 							changes.passwd = rand() + rand() + rand() + rand() + rand() + rand() + rand() + rand();
@@ -1098,10 +1032,8 @@ class user {
 
 						var errors = [];
 
-						async function saveToDB(tables) { // For each table
+						async function saveToDB(tables) {
 							var table = tables[0];
-
-							// List out fields that apply to this table
 							var User = {};
 
 							for (var field of changed) {
@@ -1111,7 +1043,7 @@ class user {
 							}
 
 							// Hash `passwd`
-							if (User.passwd && changed.includes("password")) { // If this table accepts field `passwd`, and field `password` has been changed
+							if (User.passwd && changed.includes("password")) {
 								User.passwd = await bcrypt.hash(User.passwd + table, salt);
 								if (table == user.tables[0]) {passwd = User.passwd}
 							}
@@ -1123,22 +1055,19 @@ class user {
 								var QUERY = query.updateUser
 								.replace("@", table)
 								.replace("@", fields.map((field) => {return `${field} = ?`}).join(", "));
-
+					
 								DB.query(QUERY, [...data, thisUser.id], (err, _) => {
-									if (err) { // If error								
-										errors.push(err); // Log the error in `errors` for final rejection
+									if (err) {									
+										errors.push(err);
 									}
-
 									tables.splice(table, 1);
-									if (tables.length) { // If there is any table left
-										saveToDB(tables); // Proceed with the next table
-									}
-									else { // If there is no table left
-										if (errors.length) { // If there were errors during whole update process, reject with partial error
+									if (tables.length) {
+										saveToDB(tables);
+									} else {
+										if (errors.length) {
 											if (callback) {callback({name: "SaveError", message: errors, code: "SOME_TABLE_UPDATES_FAILED"})}
 											else {reject(errors)}
-										}
-										else { // If there were no errors
+										} else {
 											// Record new 'save changes' into current 'save status' (`this.savedData`)
 											thisUser.savedData = {...thisUser.data}
 											if (changed.includes("password")) {thisUser.passwd = thisUser.data.passwd = thisUser.savedData.passwd = passwd}
@@ -1151,18 +1080,15 @@ class user {
 							}
 							else { // If there are no fields to save in this table
 								tables.splice(table, 1);
-								if (tables.length) { // If there is any table left
-									saveToDB(tables); // Proceed with the next table
-								}
-								else {// If there is no table left
-									if (errors.length) { // If there were errors during whole update process, reject with partial error
+								if (tables.length) {
+									saveToDB(tables);
+								} else {
+									if (errors.length) {
 										if (callback) {callback({name: "SaveError", message: errors, code: "SOME_TABLE_UPDATES_FAILED"})}
 										else {reject(errors)}
-									}
-									else { // If there were no errors
+									} else {
 										// Record new 'save changes' into current 'save status' (`this.savedData`)
 										thisUser.savedData = {...thisUser.data};
-										if (changed.includes("password")) {thisUser.passwd = thisUser.data.passwd = thisUser.savedData.passwd = passwd}
 
 										if (callback) {callback(null)}
 										resolve();
@@ -1201,8 +1127,8 @@ class user {
 			}
 			
 			else {
-				if (callback) {callback({name: "SaveError", message: "User not validated, while `tryValidate` is explicitly set to `false`", code: "CANNOT_SAVE_USER"})}
-				else {reject({name: "SaveError", message: "User not validated, while `tryValidate` is explicitly set to `false`", code: "CANNOT_SAVE_USER"})}
+				if (callback) {callback({name: "SaveError", message: "User not validated, and `tryValidate` is explicitly set to `false`", code: "CANNOT_SAVE_USER"})}
+				else {reject({name: "SaveError", message: "User not validated, and `tryValidate` is explicitly set to `false`", code: "CANNOT_SAVE_USER"})}
 			}
 		});
 	}
@@ -1291,7 +1217,7 @@ class user {
 	}
 
 	get (columns) {
-		var data = {};
+		data = {}
 
 		for (var field of columns) {
 			data[field] = this[field];
@@ -1312,7 +1238,7 @@ class user {
 		 */
 		return new Promise((resolve, reject) => {
 
-			// Use only the first given property
+			// Use only the first given key/value pair
 			var field = Object.keys(User)[0];
 
 			if (
@@ -1566,18 +1492,10 @@ class user {
 				var User = new user(data);
 				User.on("validated", async () => {
 					if (!User.info.existing) {
-
-						try {
-							// Generate User id
-							if (!Users.length) {last = User.id = await User.genId()}
-							else {last = User.id = await User.genId(undefined, last)}
-
-							User.status = JSON.stringify({name: "UNACTIVATED", details: "incomplete setup"});
-							Users.push(User);
-						}
-						catch (err) {
-							fails.push(User);
-						}
+						if (!Users.length) {last = User.id = await User.genId()}
+						else {last = User.id = await User.genId(undefined, last)}
+						User.status = JSON.stringify({name: "UNACTIVATED", details: "incomplete setup"});
+						Users.push(User);
 					} else {
 						fails.push(User);
 					}
@@ -1595,7 +1513,7 @@ class user {
 					validate(n + 1);
 				} else { // Begin saving to database
 					if (Users.length) {
-						function saveToDB(tables) { // For each table
+						function saveToDB(tables) {
 							var table = tables[0];
 
 							var fields = [];

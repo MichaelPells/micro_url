@@ -23,31 +23,48 @@ async function lab () {
 		nationality: "Nigeria",
 		country: "USA",
 		// password: await bcrypt.hash("password", salt),
-		email: "michaelpelle@gmail.com"
+		email: "michael@gmail.com"
 	};
 
-	// var User = new user(data);
-	// User.on("validated", async () => {
-	// 	// console.log(User);
-	// 	// User.firstName = "Michelle";
-	// 	// User.city = "Florida";
-	// 	// User.skills = JSON.stringify(["Writing", "Coding"]);
-	// 	// console.log(User);
-	// 	// User.password = await bcrypt.hash("michaele", salt);
-	// 	User.save()
-	// 	.then(() => {
-	// 		console.log("User Saved!");
-	// 		console.log(User);
-	// 	})
-	// 	.catch((err) => {
-	// 		console.log(err.message);
-	// 	});
+	const datas = {
+		firstName: "Michael",
+		lastName: "Akinpelumi",
+		gender: "Male",
+		DOB: [10, 10, 1999],
+		nationality: "Nigeria",
+		country: "USA",
+		password: await bcrypt.hash("password", salt),
+		email: "Michaelp1@gmail.com",
+		emailAddresses: ["MichaelK@gmail.com", "Michaelk@gmail.com"],
+		city: "NY",
+		skills: ["Writing", "riting"],
+		about: "This is an about",
+		careerQuestionnaires: [{question: "Question?", answer: "Answer!"}, {question: "Question?", answer: "Answer!"}],
+		CARs: [{name: "zzzname", issuer: "zzzname", id: "zzzline", title: "zzzname", date: [10,10,1999]}]
+	};
+
+	var User = new user(datas);
+	User.on("validated", async () => {
+		console.log("Validated!")
+		console.log(User);
+		// User.firstName = "Michelle";
+		// User.city = "Florida";
+		// User.skills = ["Writing", "Coding"];
+		// User.password = await bcrypt.hash("michaele", salt);
+		User.save()
+		.then(async () => {
+			console.log("User Saved!");
+			console.log(await user.findOne({email: datas.email}));
+		})
+		.catch((err) => {
+			console.log(err.message);
+		});
 		
-	// 	// console.log(User.get(["firstName", "lastName"]));
-	// });
-	// User.on("rejected", (err) => {
-	// 	console.log(err.message);
-	// });
+		console.log(User.get(["firstName", "lastName"]));
+	});
+	User.on("rejected", (err) => {
+		console.log(err.message);
+	});
 
 	// User = new user(data);
 	// User.on("validated", () => {
@@ -99,10 +116,12 @@ async function lab () {
 	// 	});
 	// })();
 
-	// (async () => {
-	// 	User = await user.findMany({"accounts.id": 8}, {"order by": "accounts.entry"});
-	// 	console.log(User)
-	// })();
+	// var text = "<He&llo>";
+	// console.log(String.fromCharCode("t"))
+
+	// User = await user.getOne(["entry", "id", "firstName", "DOB ->> '$[2]'"], {"id": "4952583171"});
+	// // , {"order by": "accounts.entry"}
+	// console.log(User)
 
 	// (async () => {
 	// 	try {
@@ -115,7 +134,7 @@ async function lab () {
 
 	// var dataset = [];
 
-	// for (i = 0; i < 10; i++) {
+	// for (i = 0; i < 2; i++) {
 	// 	dataset.push({...data, email: data.email.replace("@", `${i+1}@`)});
 	// }
 

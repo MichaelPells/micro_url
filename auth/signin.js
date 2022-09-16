@@ -53,18 +53,22 @@ async function signin(req, res) {
 			
 			User.sessionLogs[sessionId] = {
 				initiated: currentTime,
-				closed: null, // A DATETIME object (when closed) - Recent sessions (for reference purposes) are not deleted on the server after users log out.
+				closed: null, // A DATETIME object (when closed) - Recent sessions (for reference purposes) are not deleted (for a while) on the server after users log out.
 				currentSession: newSession,
 				device: {agent: req.header("user-agent"), ip: req.ip},
-				sessions: [[currentTime]] // `sessions` holds a list of each browsing session as lists of 'start' and 'end'. May be: When a new session is opened, the previous session gets updated with end date at index 1. Or: Each request updated the end date?
+				sessions: [[currentTime, currentTime]] // `sessions` holds a list of each browsing session as lists of 'start' and 'end' times. 'end' may refer to 'last used time', if that browsing session is not closed yet.
 			};
 			User.lastLoggedIn = currentTime;
+			User.lastSeen = currentTime;
 
 			User.save((err) => {
 				if (!err) {
 					// Send session (access token) in response cookie
 					try {
-						var token = jwt.sign({ id: User.id, sessionId: sessionId, time: currentTime, reset: `${currentTime.getMonth()}-${currentTime.getDate()}` }, process.env.SESSIONS_KEY);
+						var reset = Number(currentTime.getFullYear().toString() + currentTime.getMonth().toString().padStart(2, "0") + currentTime.getDate().toString().padStart(2, "0"));
+						var access = { id: User.id, sessionId: sessionId, time: currentTime, reset: reset };
+						var token = jwt.sign(access, process.env.SESSIONS_KEY);
+						
 						res.cookie("access", token, {
 							secure: process.env.NODE_ENV !== "development",
 							httpOnly: true,
