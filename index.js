@@ -1,17 +1,17 @@
 // SETTINGS
 require("dotenv").config();
 const host = "localhost";
-const port = process.env.PORT || 2222;
+const port = process.env.PORT || 5000;
 
 
 // BOOT PROCESS
-async function boot() {
+async function main() {
+
 	console.log("> Server booting");
 	
 	// DEPENDENCIES
 	const express = require("express");
 	const cors = require("cors");
-	const cookieParser = require("cookie-parser");
 
 	console.log("> Server looking for required environment variables");
 	require("./init_env");
@@ -39,35 +39,26 @@ async function boot() {
 	// Catch uncaught errors
 	process.on("uncaughtException", (err) => {
 		console.log(err);
+		process.exit(1);
 	});
 
 
 	// IMPORTS
-	const view = require("./views/view");
-	const auth = require("./auth/authorize");
-	const sessions = require("./auth/sessions");
-
-	const GET = require("./controllers/get");
-	const POST = require("./controllers/post");
-
-
+	const NEW = require("./views/new");
+	const VIEW = require("./views/view");
+	const CHANGE = require("./views/change");
+	const REMOVE = require("./views/remove");
+	const REDIRECT = require("./views/redirect");
 
 	// BACK-END BUSINESS
 	app.use(cors());
-	app.use(cookieParser(process.env.COOKIES_KEY));
-	app.use(express.urlencoded({extended: false}));
 	app.use(express.json({extended: false, limit: '1024mb'}));
 
-	app.use(view);
-	app.use(auth);
-	app.use(sessions);
-
-	app.get(/^\/.*/, GET);
-	app.post(/^\/.*/, POST);
-
-
-
-
-	require("./_lab"); // My practical laboratory
+	app.get("/new", NEW);
+	app.get("/view", VIEW);
+	app.get("/change", CHANGE);
+	app.get("/remove", REMOVE);
+	app.get("/:short", REDIRECT);
 }
-boot();
+
+main();

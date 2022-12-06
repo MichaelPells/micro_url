@@ -1,10 +1,9 @@
 const query = {
-	createUser: `INSERT INTO @ (@) VALUES (@)`,
-	creatManyUsers: `INSERT INTO @ (@) VALUES @`,
-	findUser: `SELECT @ FROM @ WHERE @@ = ?`,
-	findManyUsers: `SELECT @ FROM @ WHERE @(@) @`,
-	updateUser: `UPDATE @ SET @ WHERE id = ?`,
-	deleteUser: `DELETE FROM @ WHERE id = ?`
+	createLink: `INSERT INTO URLs (owner, short, url) VALUES (?, ?, ?)`,
+	findLink: `SELECT * FROM URLs WHERE short = ?`,
+	findManyLinks: `SELECT * FROM URLs WHERE owner = ?`,
+	updateLink: `UPDATE URLs SET owner = ?, short = ?, url = ? WHERE entry = ?`,
+	deleteLink: `DELETE FROM URLs WHERE short = ?`
 }
 
 module.exports = query;
