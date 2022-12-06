@@ -1,13 +1,13 @@
 # Micro URL API
 #### Shorten long, boring URLs to memorable, fun, micro URLs in a RESTful way!
 
-### Technologies:
+## Technologies:
  - Node JS
  - TypeScript
  - MySQL
  - Express JS
 
-### Routes (GET Method):
+## Routes (GET Method):
  - **Create a new micro URL:** `/new` (Required queries - `owner`, `short`, `url`)
  - **View existing micro URL(s):** `/view` (Required queries - `short`: returns an object if found | `owner`: returns an array of objects if found)
  - **Change an existing micro URL:** `/change` (Required queries - `short` & Optional queries - `owner`, `new_short`, `url`)
@@ -15,7 +15,7 @@
 
  - **Visit a URL via micro URL:** `/anything`
 
-### Queries:
+## Queries:
  - _`owner`:_ Name of owner (2 - 40 characters)
  - _`short`:_ Desired micro URL back-half (1 - 40 characters containing only 0 - 9, a -z, A - Z, _, - and .)
  - _`url`:_ The boring URL
