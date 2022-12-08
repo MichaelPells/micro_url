@@ -1,8 +1,13 @@
 // IMPORTS
-const Link = require("../models/link_model")
-const { REDIRECT, INTERNAL_SERVER_ERROR, NOT_FOUND } = require("../utilities/status_codes");
+var Link = require("../models/link_model")
+var { REDIRECT, INTERNAL_SERVER_ERROR, NOT_FOUND } = require("../utilities/status_codes");
 
-async function main(req, res) {
+interface Response {
+	error: object | null,
+	data: any
+}
+
+async function redirect(req: any, res: any) {
 	try {
 		const link = await Link.findOne(req.params.short);
 
@@ -10,7 +15,7 @@ async function main(req, res) {
 			res.statusCode = REDIRECT;
 			res.redirect(link.url);
 		} else {
-			var response = {
+			var response: Response = {
 				error: {message: "Page not found"},
 				data: null
 			}
@@ -20,7 +25,7 @@ async function main(req, res) {
 		}
 
 	} catch (err) {
-		var response = {
+		var response: Response = {
 			error: {message: "Internal Server Error"},
 			data: null
 		}
@@ -31,4 +36,4 @@ async function main(req, res) {
 	}
 }
 
-module.exports = main;
+module.exports = redirect;

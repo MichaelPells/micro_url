@@ -1,9 +1,14 @@
 // IMPORTS
-const Link = require("../models/link_model")
-const { CREATED, INTERNAL_SERVER_ERROR, FORBIDDEN, BAD_REQUEST } = require("../utilities/status_codes");
+var Link = require("../models/link_model")
+var { CREATED, INTERNAL_SERVER_ERROR, FORBIDDEN, BAD_REQUEST } = require("../utilities/status_codes");
 
-function main(req, res) {
-	const data = {
+interface Response {
+	error: object | null,
+	data: any
+}
+
+function create(req: any, res: any) {
+	const data: object = {
 		owner: req.query.owner,
 		short: req.query.short,
 		url: req.query.url
@@ -14,7 +19,7 @@ function main(req, res) {
 		if (!link.info.existing) { // If link does not already exist
 			try {
 				await link.save();
-				var response = {
+				var response: Response = {
 					error: null,
 					data: "Short URL created successfully"
 				}
@@ -23,7 +28,7 @@ function main(req, res) {
 				res.send(response);
 
 			} catch (err) { // Error must be due to server.
-				var response = {
+				var response: Response = {
 					error: {message: "Internal Server Error"},
 					data: null
 				}
@@ -33,7 +38,7 @@ function main(req, res) {
 				console.log(err);
 			}
 		} else { // If link exists
-			var response = {
+			var response: Response = {
 				error: {message: "Short URL already taken"},
 				data: null
 			}
@@ -43,7 +48,7 @@ function main(req, res) {
 		}
 	});
 
-	link.on("rejected", (err) => { // link data validation failed
+	link.on("rejected", (err: Error) => { // link data validation failed
 		var response = {
 			error: err,
 			data: null
@@ -55,4 +60,4 @@ function main(req, res) {
 
 }
 
-module.exports = main;
+module.exports = create;

@@ -6,4 +6,4 @@ owner						VARCHAR(255)	NOT NULL						,
 short						VARCHAR(255)	NOT NULL			PRIMARY KEY	,
 url							VARCHAR(255)	NOT NULL
 `
-.replace(/	+/g, " ").replace(/ +,/g, ",");
+.replace(/	+/g, " ").replace(/ +,/g, ",") as string;

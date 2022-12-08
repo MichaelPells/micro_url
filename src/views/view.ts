@@ -1,8 +1,13 @@
 // IMPORTS
-const Link = require("../models/link_model")
-const { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } = require("../utilities/status_codes");
+var Link = require("../models/link_model")
+var { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } = require("../utilities/status_codes");
 
-async function main(req, res) {
+interface Response {
+	error: object | null,
+	data: any
+}
+
+async function view(req: any, res: any) {
 	const short =  req.query.short;
 	const owner = req.query.owner;
 
@@ -12,7 +17,7 @@ async function main(req, res) {
 		} else if (owner) {
 			var data = await Link.findMany(owner);
 		} else {
-			var response = {
+			var response: Response = {
 				error: {message: "No search parameter given"},
 				data: null
 			}
@@ -23,7 +28,7 @@ async function main(req, res) {
 			return;
 		}
 
-		var response = {
+		var response: Response = {
 			error: null,
 			data: data
 		}
@@ -32,7 +37,7 @@ async function main(req, res) {
 		res.send(response);
 
 	} catch (err) {
-		var response = {
+		var response: Response = {
 			error: {message: "Internal Server Error"},
 			data: null
 		}
@@ -43,4 +48,4 @@ async function main(req, res) {
 	}
 }
 
-module.exports = main;
+module.exports = view;

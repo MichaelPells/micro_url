@@ -1,11 +1,11 @@
 // SETTINGS
 require("dotenv").config();
-const host = "localhost";
-const port = process.env.PORT || 5000;
+const host: string = "localhost";
+const port: string | number = process.env.PORT || 5000;
 
 
 // BOOT PROCESS
-async function main() {
+async function main(): Promise<void> {
 
 	console.log("> Server booting");
 	
@@ -37,18 +37,18 @@ async function main() {
 	});
 
 	// Catch uncaught errors
-	process.on("uncaughtException", (err) => {
+	process.on("uncaughtException", (err: Error) => {
 		console.log(err);
 		process.exit(1);
 	});
 
 
 	// IMPORTS
-	const NEW = require("./views/new");
-	const VIEW = require("./views/view");
-	const CHANGE = require("./views/change");
-	const REMOVE = require("./views/remove");
-	const REDIRECT = require("./views/redirect");
+	const NEW: Function = require("./views/new");
+	const VIEW: Function = require("./views/view");
+	const CHANGE: Function = require("./views/change");
+	const REMOVE: Function = require("./views/remove");
+	const REDIRECT: Function = require("./views/redirect");
 
 	// BACK-END BUSINESS
 	app.use(cors());

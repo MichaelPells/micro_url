@@ -1,4 +1,4 @@
-const query = {
+const query: { [index: string]: string } = {
 	createLink: `INSERT INTO URLs (owner, short, url) VALUES (?, ?, ?)`,
 	findLink: `SELECT * FROM URLs WHERE short = ?`,
 	findManyLinks: `SELECT * FROM URLs WHERE owner = ?`,
